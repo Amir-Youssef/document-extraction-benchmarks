@@ -1,58 +1,58 @@
 ================================================================================
-                    MODELOS DISPONÍVEIS - DOC EXTRACTOR (VISÃO)
+                    AVAILABLE MODELS - DOC EXTRACTOR (VISION)
 ================================================================================
 
-Este arquivo lista apenas os modelos Multimodais (com capacidade visual)
-ativos no sistema. Versões obsoletas de texto e modelos deprecados foram removidos.
+This file lists only Multimodal models (with visual capability)
+active in the system. Obsolete text versions and deprecated models have been removed.
 
 --------------------------------------------------------------------------------
- #  | Modelo              | Versão/Tamanho      | Modo Visual     | Contexto
+ #  | Model               | Version/Size        | Visual Mode     | Context
 --------------------------------------------------------------------------------
- 1  | Gemini 3.1 Pro      | Preview (v3.1)      | PDF nativo      | 1M tokens
- 2  | Gemini 3 Flash      | Preview (v3)        | PDF nativo      | 1M tokens
- 3  | Kimi K2.5           | MoE 1T (32B ativos) | PDF -> Imagem   | 128K
- 4  | Qwen 3.5 27B        | 27B denso (v3.5)    | PDF -> Imagem   | 128K
- 5  | Qwen 3.5 35B        | MoE 35B (3B ativos) | PDF -> Imagem   | 128K
- 6  | Qwen 3.5 9B         | 9B denso (v3.5)     | PDF -> Imagem   | 128K
- 7  | Qwen3-VL            | v3 (Vision-Lang)    | PDF -> Imagem   | 128K
- 8  | Qwen3-VL 30B        | 30B (Vision-Lang)   | PDF -> Imagem   | 128K
- 9  | Gemma 3 27B         | 27B (v3)            | PDF -> Imagem   | 128K
-10  | Gemma 3 12B         | 12B (v3)            | PDF -> Imagem   | 128K
+ 1  | Gemini 3.1 Pro      | Preview (v3.1)      | Native PDF      | 1M tokens
+ 2  | Gemini 3 Flash      | Preview (v3)        | Native PDF      | 1M tokens
+ 3  | Kimi K2.5           | MoE 1T (32B active) | PDF -> Image    | 128K
+ 4  | Qwen 3.5 27B        | 27B dense (v3.5)    | PDF -> Image    | 128K
+ 5  | Qwen 3.5 35B        | MoE 35B (3B active) | PDF -> Image    | 128K
+ 6  | Qwen 3.5 9B         | 9B dense (v3.5)     | PDF -> Image    | 128K
+ 7  | Qwen3-VL            | v3 (Vision-Lang)    | PDF -> Image    | 128K
+ 8  | Qwen3-VL 30B        | 30B (Vision-Lang)   | PDF -> Image    | 128K
+ 9  | Gemma 3 27B         | 27B (v3)            | PDF -> Image    | 128K
+10  | Gemma 3 12B         | 12B (v3)            | PDF -> Image    | 128K
 --------------------------------------------------------------------------------
 
 ================================================================================
-DETALHES TÉCNICOS POR MODELO
+TECHNICAL DETAILS BY MODEL
 ================================================================================
 
---- FAMÍLIA GEMINI (Google) ---
-- Gemini 3.1 Pro: Versão Pro mais recente configurada. Melhor estabilidade e
-  maior capacidade de raciocínio. Suporte nativo a PDF.
-- Gemini 3 Flash: Modelo padrão otimizado para custo e velocidade.
+--- GEMINI FAMILY (Google) ---
+- Gemini 3.1 Pro: Latest Pro version configured. Better stability and
+  greater reasoning capability. Native PDF support.
+- Gemini 3 Flash: Standard model optimized for cost and speed.
 
---- FAMÍLIA QWEN (Alibaba Cloud) ---
-- Qwen 3.5 27B: Modelo denso de 27B parâmetros da família Qwen v3.5.
-  Implementado via endpoint dedicado vLLM da 4vants. Alta performance visual.
-- Qwen 3.5 35B (A3B): Arquitetura MoE com 35B parâmetros totais, mas apenas
-  ~3B ativos por token. Latência muito baixa apesar do tamanho nominal.
-  Implementado via endpoint dedicado vLLM da 4vants.
-- Qwen 3.5 9B: Modelo denso compacto de 9B parâmetros. Mais rápido da família
-  Qwen 3.5. Implementado via endpoint dedicado vLLM da 4vants.
-- Qwen3-VL: Variante multimodal da Alibaba, desenvolvida primariamente para
-  compreensão de imagens aplicadas a documentos e layouts complexos.
-- Qwen3-VL 30B: Variante multimodal de 30B parâmetros. Maior capacidade visual
-  que o Qwen3-VL base. Servido via Ollama.
+--- QWEN FAMILY (Alibaba Cloud) ---
+- Qwen 3.5 27B: Dense 27B parameter model from Qwen v3.5 family.
+  Implemented via dedicated 4vants vLLM endpoint. High visual performance.
+- Qwen 3.5 35B (A3B): MoE architecture with 35B total parameters, but only
+  ~3B active per token. Very low latency despite nominal size.
+  Implemented via dedicated 4vants vLLM endpoint.
+- Qwen 3.5 9B: Compact dense 9B parameter model. Fastest in the
+  Qwen 3.5 family. Implemented via dedicated 4vants vLLM endpoint.
+- Qwen3-VL: Alibaba's multimodal variant, primarily developed for
+  image understanding applied to documents and complex layouts.
+- Qwen3-VL 30B: 30B parameter multimodal variant. Greater visual capacity
+  than base Qwen3-VL. Served via Ollama.
 
---- FAMÍLIA KIMI (Moonshot AI) ---
-- Kimi K2.5: Arquitetura MoE massiva com 1 trilhão de parâmetros. Especialista
-  em lidar com grandes volumes de dados no contexto. Envia o PDF como PNG.
+--- KIMI FAMILY (Moonshot AI) ---
+- Kimi K2.5: Massive MoE architecture with 1 trillion parameters. Specialist
+  in handling large data volumes in context. Sends PDF as PNG.
 
---- FAMÍLIA GEMMA (Google Open Models) ---
-- Gemma 3 27B: Modelo aberto de médio porte. Usa codificador SigLIP (v3)
-  especializado em interpretação visual de alta resolução.
-- Gemma 3 12B: Versão compacta e rápida, otimizada para baixa latência.
+--- GEMMA FAMILY (Google Open Models) ---
+- Gemma 3 27B: Mid-size open model. Uses SigLIP encoder (v3)
+  specialized in high-resolution visual interpretation.
+- Gemma 3 12B: Compact and fast version, optimized for low latency.
 
 ================================================================================
-INFRAESTRUTURA DE SERVING
+SERVING INFRASTRUCTURE
 ================================================================================
 
 1. GOOGLE AI API     -> Gemini (3.1 Pro / Flash)
@@ -61,12 +61,12 @@ INFRAESTRUTURA DE SERVING
 4. OLLAMA (4vants)   -> Qwen3-VL, Qwen3-VL 30B, Gemma 3 27B/12B
 
 ================================================================================
-MODOS DE PROCESSAMENTO
+PROCESSING MODES
 ================================================================================
 
-1. PDF NATIVO      -> Gemini (3.1 Pro / Flash)
-2. PDF -> IMAGEM   -> Kimi K2.5, Qwen 3.5, Qwen VL, Gemma 3
+1. NATIVE PDF      -> Gemini (3.1 Pro / Flash)
+2. PDF -> IMAGE    -> Kimi K2.5, Qwen 3.5, Qwen VL, Gemma 3
 
 --------------------------------------------------------------------------------
-O sistema agora utiliza exclusivamente modelos com capacidade visual direta.
+The system now exclusively uses models with direct visual capability.
 ================================================================================

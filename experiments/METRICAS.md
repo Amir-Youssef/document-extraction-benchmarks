@@ -1,57 +1,57 @@
-# Métricas de Avaliação — `experiments/metrics.py`
+# Evaluation Metrics — `experiments/metrics.py`
 
-Este documento descreve as métricas utilizadas pelo módulo de experimentos para avaliar a qualidade da extração de dados dos documentos.
+This document describes the metrics used by the experiments module to evaluate the quality of document data extraction.
 
-Todas as métricas operam sobre dicionários `campo → valor` e são calculadas dinamicamente sobre a **união das chaves** do ground-truth e da predição — nenhum nome de campo é hard-coded.
-
----
-
-## Normalização de Texto
-
-Antes de qualquer comparação, os valores passam pela função `normalise()`:
-
-1. Converte para **minúsculas**
-2. Remove **espaços** nas extremidades (`strip`)
-3. Colapsa **espaços internos** múltiplos em um único espaço
-4. Remove **acentos/diacríticos** (ex: `ç` → `c`, `ã` → `a`)
-
-Isso garante que diferenças superficiais de formatação não impactem a avaliação.
+All metrics operate on `field → value` dictionaries and are dynamically calculated over the **union of keys** from ground-truth and prediction — no field names are hard-coded.
 
 ---
 
-## Métricas Disponíveis
+## Text Normalization
 
-### 1. Accuracy (Acurácia)
+Before any comparison, values pass through the `normalise()` function:
 
-**Função:** `accuracy(expected, predicted) → float`
+1. Converts to **lowercase**
+2. Removes **spaces** at extremities (`strip`)
+3. Collapses **multiple internal spaces** into a single space
+4. Removes **accents/diacritics** (e.g., `ç` → `c`, `ã` → `a`)
 
-Proporção de campos cujos valores normalizados coincidem exatamente.
-
-$$\text{accuracy} = \frac{\text{campos corretos}}{\text{total de campos}}$$
-
-- **Total de campos** = união das chaves de `expected` e `predicted`.
-- Um campo ausente em um dos dicts é tratado como string vazia (`""`).
-- Retorna `0.0` se ambos os dicts forem vazios.
-
-**Exemplo:** se 7 de 10 campos estão corretos → `accuracy = 0.7`.
+This ensures that superficial formatting differences don't impact evaluation.
 
 ---
 
-### 2. Precision, Recall e F1-Score
+## Available Metrics
 
-**Função:** `precision_recall_f1(expected, predicted) → (precision, recall, f1)`
+### 1. Accuracy
 
-Métricas clássicas de recuperação de informação, aplicadas no nível de campos:
+**Function:** `accuracy(expected, predicted) → float`
 
-| Conceito | Definição |
+Proportion of fields whose normalized values match exactly.
+
+$$\text{accuracy} = \frac{\text{correct fields}}{\text{total fields}}$$
+
+- **Total fields** = union of keys from `expected` and `predicted`.
+- A field absent in one of the dicts is treated as empty string (`""`).
+- Returns `0.0` if both dicts are empty.
+
+**Example:** if 7 out of 10 fields are correct → `accuracy = 0.7`.
+
+---
+
+### 2. Precision, Recall, and F1-Score
+
+**Function:** `precision_recall_f1(expected, predicted) → (precision, recall, f1)`
+
+Classic information retrieval metrics, applied at field level:
+
+| Concept | Definition |
 |---|---|
-| **True Positive (TP)** | Campo presente em ambos os dicts **e** valores coincidem |
-| **False Positive (FP)** | Campo presente em `predicted` mas ausente em `expected`, **ou** presente em ambos mas com valores diferentes |
-| **False Negative (FN)** | Campo presente em `expected` mas ausente em `predicted`, **ou** presente em ambos mas com valores diferentes |
+| **True Positive (TP)** | Field present in both dicts **and** values match |
+| **False Positive (FP)** | Field present in `predicted` but absent in `expected`, **or** present in both but with different values |
+| **False Negative (FN)** | Field present in `expected` but absent in `predicted`, **or** present in both but with different values |
 
-> **Nota:** quando um campo existe em ambos os dicts mas os valores divergem, ele conta tanto como FP quanto como FN.
+> **Note:** when a field exists in both dicts but values diverge, it counts as both FP and FN.
 
-**Fórmulas:**
+**Formulas:**
 
 $$\text{precision} = \frac{TP}{TP + FP}$$
 
@@ -59,65 +59,65 @@ $$\text{recall} = \frac{TP}{TP + FN}$$
 
 $$F_1 = \frac{2 \times \text{precision} \times \text{recall}}{\text{precision} + \text{recall}}$$
 
-- **Precision** responde: "dos campos que o modelo retornou, quantos estão corretos?"
-- **Recall** responde: "dos campos esperados, quantos o modelo acertou?"
-- **F1** é a média harmônica entre precision e recall — equilibra ambas as perspectivas.
+- **Precision** answers: "of the fields the model returned, how many are correct?"
+- **Recall** answers: "of the expected fields, how many did the model get right?"
+- **F1** is the harmonic mean between precision and recall — balances both perspectives.
 
-Todas retornam `0.0` quando o denominador é zero.
-
----
-
-### 3. Similaridade de Levenshtein (Média)
-
-**Função:** `mean_levenshtein_similarity(expected, predicted) → float`
-
-Mede quão próximos os valores extraídos estão dos esperados, mesmo quando não são idênticos.
-
-**Cálculo por campo:**
-
-$$\text{similaridade} = 1 - \frac{\text{distância de Levenshtein}(a, b)}{\max(|a|, |b|)}$$
-
-- A **distância de Levenshtein** conta o número mínimo de inserções, remoções ou substituições de caracteres para transformar uma string na outra.
-- A similaridade resultante está no intervalo `[0, 1]`: **1.0** = strings idênticas, **0.0** = completamente diferentes.
-- Retorna `1.0` quando ambas as strings são vazias.
-
-A métrica final é a **média** da similaridade sobre todos os campos (união de chaves).
-
-**Utilidade:** captura acertos parciais. Se o modelo extraiu `"Joao da Silva"` e o esperado é `"João da Silva"`, a similaridade será alta mesmo que a comparação exata falhe (antes da normalização de acentos).
+All return `0.0` when denominator is zero.
 
 ---
 
-### 4. Estatísticas de Latência
+### 3. Levenshtein Similarity (Mean)
 
-**Função:** `compute_latency_stats(latencies) → dict`
+**Function:** `mean_levenshtein_similarity(expected, predicted) → float`
 
-Estatísticas descritivas sobre os tempos de execução das extrações:
+Measures how close extracted values are to expected ones, even when not identical.
 
-| Chave | Descrição |
+**Calculation per field:**
+
+$$\text{similarity} = 1 - \frac{\text{Levenshtein distance}(a, b)}{\max(|a|, |b|)}$$
+
+- The **Levenshtein distance** counts the minimum number of character insertions, removals, or substitutions to transform one string into another.
+- The resulting similarity is in the range `[0, 1]`: **1.0** = identical strings, **0.0** = completely different.
+- Returns `1.0` when both strings are empty.
+
+The final metric is the **mean** of similarity across all fields (union of keys).
+
+**Usefulness:** captures partial matches. If the model extracted `"Joao da Silva"` and the expected is `"João da Silva"`, the similarity will be high even if exact comparison fails (before accent normalization).
+
+---
+
+### 4. Latency Statistics
+
+**Function:** `compute_latency_stats(latencies) → dict`
+
+Descriptive statistics about extraction execution times:
+
+| Key | Description |
 |---|---|
-| `mean` | Tempo médio (segundos) |
-| `min` | Menor tempo registrado |
-| `max` | Maior tempo registrado |
+| `mean` | Average time (seconds) |
+| `min` | Shortest recorded time |
+| `max` | Longest recorded time |
 
-Valores arredondados a 4 casas decimais. Retorna `0.0` para todos se a lista estiver vazia.
+Values rounded to 4 decimal places. Returns `0.0` for all if list is empty.
 
 ---
 
-## Funções Auxiliares
+## Helper Functions
 
-| Função | Descrição |
+| Function | Description |
 |---|---|
-| `normalise(value)` | Normaliza um valor para comparação (lower, strip, collapse spaces, remove accents) |
-| `compute_field_matches(expected, predicted)` | Retorna lista de tuplas `(campo, valor_esperado, valor_predito, match)` para inspeção detalhada campo a campo |
-| `_levenshtein_distance(a, b)` | Calcula a distância de edição entre duas strings (uso interno) |
-| `_strip_accents(value)` | Remove diacríticos de uma string (uso interno) |
+| `normalise(value)` | Normalizes a value for comparison (lower, strip, collapse spaces, remove accents) |
+| `compute_field_matches(expected, predicted)` | Returns list of tuples `(field, expected_value, predicted_value, match)` for detailed field-by-field inspection |
+| `_levenshtein_distance(a, b)` | Calculates edit distance between two strings (internal use) |
+| `_strip_accents(value)` | Removes diacritics from a string (internal use) |
 
 ---
 
-## Resumo Visual
+## Visual Summary
 
 ```
-                    Comparação Exata          Comparação Parcial
+                    Exact Comparison          Partial Comparison
                    ┌─────────────────┐       ┌──────────────────┐
                    │  Accuracy        │       │  Levenshtein     │
                    │  Precision       │       │  Similarity      │
@@ -127,7 +127,7 @@ Valores arredondados a 4 casas decimais. Retorna `0.0` para todos se a lista est
 
                     Performance
                    ┌─────────────────┐
-                   │  Latência        │
+                   │  Latency         │
                    │  (mean/min/max)  │
                    └─────────────────┘
 ```

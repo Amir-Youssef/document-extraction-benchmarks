@@ -1,8 +1,8 @@
 # Doc Extractor
 
-Aplicação full-stack para upload de documentos (PDFs ou imagens), identificação de tipo e extração de dados estruturados usando LLMs (Google Gemini via Pydantic AI).
+Full-stack application for uploading documents (PDFs or images), identifying their type, and extracting structured data using LLMs (Google Gemini via Pydantic AI).
 
-Envie uma foto de um documento brasileiro → receba um JSON validado com os campos extraídos.
+Send a photo of a Brazilian document → receive a validated JSON with the extracted fields.
 
 ```
 ┌──────────┐                             ┌────────────────┐      Gemini       ┌──────────┐
@@ -11,79 +11,79 @@ Envie uma foto de um documento brasileiro → receba um JSON validado com os cam
 └──────────┘    file + document_type     └────────────────┘                   └──────────┘
                   + llm_model (opt)             │
                                                 ▼
-                                         JSON estruturado
+                                         Structured JSON
                                        (Pydantic validated)
 ```
 
 ---
 
-## Tecnologias Utilizadas
+## Technologies Used
 
 ### Backend
 
-| Tecnologia | Papel |
+| Technology | Role |
 |---|---|
-| **Python 3.12+** | Linguagem principal |
-| **FastAPI** | Framework web (endpoints, DI, validação, CORS) |
-| **Pydantic v2** | Validação de dados e modelos de domínio |
-| **Pydantic AI** | Orquestração de chamadas ao LLM (provider-agnostic) |
-| **Google Gemini** | LLM multimodal (visão + texto) via `pydantic-ai[google]` |
-| **pydantic-settings** | Gerenciamento de configuração via variáveis de ambiente |
-| **uv** | Gerenciamento de dependências e virtualenv |
-| **Docker** | Containerização (multi-stage production + dev) |
+| **Python 3.12+** | Main language |
+| **FastAPI** | Web framework (endpoints, DI, validation, CORS) |
+| **Pydantic v2** | Data validation and domain models |
+| **Pydantic AI** | LLM call orchestration (provider-agnostic) |
+| **Google Gemini** | Multimodal LLM (vision + text) via `pydantic-ai[google]` |
+| **pydantic-settings** | Configuration management via environment variables |
+| **uv** | Dependency and virtualenv management |
+| **Docker** | Containerization (multi-stage production + dev) |
 
 ### Frontend
 
-| Tecnologia | Papel |
+| Technology | Role |
 |---|---|
-| **TypeScript** | Linguagem (strict mode) |
-| **React 19** | Framework de UI (functional components, hooks) |
-| **Vite 7** | Build tool e dev server |
-| **ESLint 9** | Linting com `typescript-eslint`, `react-hooks`, `react-refresh` |
+| **TypeScript** | Language (strict mode) |
+| **React 19** | UI framework (functional components, hooks) |
+| **Vite 7** | Build tool and dev server |
+| **ESLint 9** | Linting with `typescript-eslint`, `react-hooks`, `react-refresh` |
 
 ---
 
-## Arquitetura
+## Architecture
 
-O sistema segue princípios **SOLID** com design patterns centrais:
+The system follows **SOLID** principles with core design patterns:
 
-| Pattern | Classe | Responsabilidade |
+| Pattern | Class | Responsibility |
 |---|---|---|
-| **Strategy** | `DocumentExtractionStrategy` | Cada tipo de documento tem sua própria estratégia de extração |
-| **Factory** | `ExtractorFactory` | Mapeia `DocumentType` → Strategy e instancia com o `LLMClient` |
-| **Orchestrator** | `DocumentOrchestrator` | Coordena o fluxo: recebe request → obtém strategy → executa → retorna |
-| **Model Factory** | `ModelFactory` | Abstrai a construção de modelos LLM por provider |
+| **Strategy** | `DocumentExtractionStrategy` | Each document type has its own extraction strategy |
+| **Factory** | `ExtractorFactory` | Maps `DocumentType` → Strategy and instantiates with `LLMClient` |
+| **Orchestrator** | `DocumentOrchestrator` | Coordinates flow: receives request → obtains strategy → executes → returns |
+| **Model Factory** | `ModelFactory` | Abstracts LLM model construction by provider |
 
-### Separação de camadas (Backend)
+### Layer Separation (Backend)
 
 ```
-api/          → Camada HTTP (FastAPI). Routers finos, DI, validação de entrada.
-domain/       → Camada pura. Modelos Pydantic, enums, interfaces (ABC). Zero dependências externas.
-services/     → Lógica de negócio. Factory, Orchestrator, Strategies concretas.
-infra/        → Adapters de I/O. Implementação do LLMClient usando Pydantic AI + Gemini.
-core/         → Configuração global. Settings, logging, exceções de domínio.
+api/          → HTTP layer (FastAPI). Thin routers, DI, input validation.
+domain/       → Pure layer. Pydantic models, enums, interfaces (ABC). Zero external dependencies.
+services/     → Business logic. Factory, Orchestrator, concrete Strategies.
+infra/        → I/O adapters. LLMClient implementation using Pydantic AI + Gemini.
+core/         → Global configuration. Settings, logging, domain exceptions.
 ```
 
-O domínio **nunca** importa FastAPI, Pydantic AI ou qualquer biblioteca de infraestrutura. A comunicação com LLMs é feita exclusivamente através da interface `LLMClient` (ABC), implementada por `PydanticAILLMClient` na camada de infraestrutura.
+The domain **never** imports FastAPI, Pydantic AI, or any infrastructure library. Communication with LLMs is done exclusively through the `LLMClient` interface (ABC), implemented by `PydanticAILLMClient` in the infrastructure layer.
 
 ### Frontend
 
-- **SPA** com React puro (sem routing library).
-- **UI API-driven**: tipos de documento e modelos LLM são carregados dinamicamente do backend (`GET /v1/document-types`, `GET /v1/llm-models`), então o frontend **nunca** hardcoda opções de domínio.
-- **API client** fetch-based em `api.ts` com tratamento de erros (parse de `detail` da resposta JSON).
+- **SPA** with pure React (no routing library).
+- **API-driven UI**: document types and LLM models are dynamically loaded from the backend (`GET /v1/document-types`, `GET /v1/llm-models`), so the frontend **never** hardcodes domain options.
+- **Fetch-based API client** in `api.ts` with error handling (parses `detail` from JSON response).
 
 ---
 
-## Estrutura de Pastas
+## Folder Structure
 
-O projeto é um **monorepo** com duas aplicações independentes em `src/`:
+The project is a **monorepo** with two independent applications in `src/`:
 
 ```
 src/
 ├── backend/                         # Python — FastAPI REST API
 │   ├── main.py                      # App factory, CORS, exception handlers, router registration
 │   ├── api/
-│   │   ├── dependencies.py          # Cadeia completa de DI (Settings → ModelFactory → LLMClient → Factory → Orchestrator)
+│   │   ├── dependencies.py          # Complete DI chain (Settings → ModelFactory → LLMClient → Factory → Orchestrator)
 │   │   └── routers/
 │   │       ├── health.py            # GET /health
 │   │       ├── extract.py           # POST /v1/extract
@@ -91,8 +91,8 @@ src/
 │   │       └── llm_models.py        # GET /v1/llm-models
 │   ├── core/
 │   │   ├── config.py                # Settings (pydantic-settings), MODEL_IDENTIFIERS mapping
-│   │   ├── logging.py               # Logging estruturado
-│   │   └── exceptions.py            # Hierarquia de exceções de domínio (DocExtractorError base)
+│   │   ├── logging.py               # Structured logging
+│   │   └── exceptions.py            # Domain exception hierarchy (DocExtractorError base)
 │   ├── domain/
 │   │   ├── interfaces.py            # ABCs: LLMClient, DocumentExtractionStrategy
 │   │   ├── enumx/
@@ -102,8 +102,8 @@ src/
 │   │   │   ├── extract_request.py   # ExtractDocumentRequest
 │   │   │   └── extract_response.py  # ExtractedDocument
 │   │   └── models/
-│   │       ├── cnh.py               # CNHData (modelo Pydantic)
-│   │       └── certificate.py       # CertificateData (modelo Pydantic)
+│   │       ├── cnh.py               # CNHData (Pydantic model)
+│   │       └── certificate.py       # CertificateData (Pydantic model)
 │   ├── services/
 │   │   ├── factory.py               # ExtractorFactory
 │   │   ├── orchestrator.py          # DocumentOrchestrator
@@ -112,70 +112,70 @@ src/
 │   │       └── certificate.py       # CertificateExtractionStrategy
 │   └── infra/
 │       └── llm/
-│           ├── gemini_client.py     # PydanticAILLMClient (adapter Pydantic AI)
-│           └── model_factory.py     # ModelFactory (constrói instâncias de Model por provider)
+│           ├── gemini_client.py     # PydanticAILLMClient (Pydantic AI adapter)
+│           └── model_factory.py     # ModelFactory (builds Model instances by provider)
 └── frontend/                        # TypeScript — React SPA
     ├── index.html                   # Entry HTML (Vite SPA)
-    ├── package.json                 # Dependências & scripts
-    ├── vite.config.ts               # Config Vite (plugin React)
-    ├── tsconfig.json                # Project references TypeScript
-    ├── tsconfig.app.json            # Config TS da app (strict mode)
+    ├── package.json                 # Dependencies & scripts
+    ├── vite.config.ts               # Vite config (React plugin)
+    ├── tsconfig.json                # TypeScript project references
+    ├── tsconfig.app.json            # App TS config (strict mode)
     ├── eslint.config.js             # ESLint flat config
     └── src/
         ├── main.tsx                 # React root (StrictMode)
-        ├── App.tsx                  # Componente principal (form, state, submit)
-        ├── api.ts                   # API client (fetch-based, conecta ao backend)
-        ├── types.ts                 # Interfaces TypeScript (DocumentTypeOption, LLMModelOption, ExtractedDocument)
-        └── index.css                # Estilos globais (minimal, system-ui)
+        ├── App.tsx                  # Main component (form, state, submit)
+        ├── api.ts                   # API client (fetch-based, connects to backend)
+        ├── types.ts                 # TypeScript interfaces (DocumentTypeOption, LLMModelOption, ExtractedDocument)
+        └── index.css                # Global styles (minimal, system-ui)
 ```
 
 ---
 
-## Pré-requisitos
+## Prerequisites
 
-- **Python** 3.12 ou superior
-- **uv** ([docs.astral.sh/uv](https://docs.astral.sh/uv/)) — gerenciador de pacotes Python
-- **Node.js** 18+ e **npm** — para o frontend
-- **Chave de API do Google Gemini** ([aistudio.google.com](https://aistudio.google.com/))
-- **Docker** e **Docker Compose** (opcional, para execução containerizada)
+- **Python** 3.12 or higher
+- **uv** ([docs.astral.sh/uv](https://docs.astral.sh/uv/)) — Python package manager
+- **Node.js** 18+ and **npm** — for the frontend
+- **Google Gemini API Key** ([aistudio.google.com](https://aistudio.google.com/))
+- **Docker** and **Docker Compose** (optional, for containerized execution)
 
 ---
 
-## Instalação e Configuração
+## Installation and Configuration
 
-### 1. Clonar o repositório
+### 1. Clone the repository
 
 ```bash
-git clone <url-do-repositorio>
+git clone <repository-url>
 cd doc-extractor
 ```
 
-### 2. Configurar variáveis de ambiente
+### 2. Configure environment variables
 
-Todas as variáveis de ambiente do backend usam o prefixo `DOC_EXTRACTOR_`.
+All backend environment variables use the `DOC_EXTRACTOR_` prefix.
 
-Crie um arquivo `.env` na **raiz do projeto**:
+Create a `.env` file in the **project root**:
 
 ```env
-DOC_EXTRACTOR_GEMINI_API_KEY=sua-chave-aqui
+DOC_EXTRACTOR_GEMINI_API_KEY=your-key-here
 DOC_EXTRACTOR_DEFAULT_LLM_MODEL=gemini-pro
 DOC_EXTRACTOR_ENVIRONMENT=development
 DOC_EXTRACTOR_LOG_LEVEL=INFO
 ```
 
-> ⚠️ **Nunca** commite chaves de API. O `.env` já está no `.gitignore`.
+> ⚠️ **Never** commit API keys. The `.env` is already in `.gitignore`.
 
-#### Variáveis disponíveis
+#### Available variables
 
-| Variável | Obrigatória | Default | Descrição |
+| Variable | Required | Default | Description |
 |---|---|---|---|
-| `DOC_EXTRACTOR_GEMINI_API_KEY` | **Sim** | `""` | Chave de API do Google Gemini |
-| `DOC_EXTRACTOR_DEFAULT_LLM_MODEL` | Não | `gemini-pro` | Modelo LLM padrão (`gemini-pro` ou `gemini-flash`) |
-| `DOC_EXTRACTOR_APP_NAME` | Não | `Doc Extractor API` | Nome da aplicação |
-| `DOC_EXTRACTOR_ENVIRONMENT` | Não | `development` | Ambiente de execução |
-| `DOC_EXTRACTOR_LOG_LEVEL` | Não | `INFO` | Nível de log (`DEBUG`, `INFO`, `WARNING`, `ERROR`) |
+| `DOC_EXTRACTOR_GEMINI_API_KEY` | **Yes** | `""` | Google Gemini API key |
+| `DOC_EXTRACTOR_DEFAULT_LLM_MODEL` | No | `gemini-pro` | Default LLM model (`gemini-pro` or `gemini-flash`) |
+| `DOC_EXTRACTOR_APP_NAME` | No | `Doc Extractor API` | Application name |
+| `DOC_EXTRACTOR_ENVIRONMENT` | No | `development` | Execution environment |
+| `DOC_EXTRACTOR_LOG_LEVEL` | No | `INFO` | Log level (`DEBUG`, `INFO`, `WARNING`, `ERROR`) |
 
-### 3. Instalar dependências
+### 3. Install dependencies
 
 **Backend (Python):**
 
@@ -193,75 +193,75 @@ cd ../..
 
 ---
 
-## Como rodar localmente
+## How to Run Locally
 
 ### Backend
 
 ```bash
-# Subir a API em modo desenvolvimento (hot reload na porta 8000)
+# Start API in development mode (hot reload on port 8000)
 uv run fastapi dev src/backend/main.py
 
-# Verificar que está funcionando
+# Verify it's working
 curl http://localhost:8000/health
 # {"status":"ok"}
 ```
 
-A documentação interativa (Swagger) estará disponível em: http://localhost:8000/docs
+Interactive documentation (Swagger) will be available at: http://localhost:8000/docs
 
 ### Frontend
 
-Em outro terminal:
+In another terminal:
 
 ```bash
 cd src/frontend
 npm run dev
 ```
 
-O frontend estará disponível em: http://localhost:5173
+The frontend will be available at: http://localhost:5173
 
-> O frontend conecta ao backend em `http://localhost:8000` (hardcoded em `api.ts`). Certifique-se de que o backend está rodando antes de usar o frontend.
+> The frontend connects to the backend at `http://localhost:8000` (hardcoded in `api.ts`). Make sure the backend is running before using the frontend.
 
 ---
 
-## Como rodar com Docker
+## How to Run with Docker
 
-O Docker Compose possui dois serviços: **produção** e **desenvolvimento**.
+Docker Compose has two services: **production** and **development**.
 
-### Produção
+### Production
 
-O Dockerfile de produção usa um **multi-stage build** (builder → slim runtime com usuário não-root).
+The production Dockerfile uses a **multi-stage build** (builder → slim runtime with non-root user).
 
 ```bash
-# Build e subir
+# Build and start
 docker compose up --build
 
-# Validar
+# Validate
 curl http://localhost:8000/health
 ```
 
-### Desenvolvimento
+### Development
 
-O Dockerfile de desenvolvimento monta o código fonte via volume para hot reload.
+The development Dockerfile mounts the source code via volume for hot reload.
 
 ```bash
-# Build e subir com profile dev
+# Build and start with dev profile
 docker compose --profile dev up --build
 ```
 
-Porta padrão exposta: **8000**.
+Default exposed port: **8000**.
 
-> **Nota:** Os Dockerfiles atuais cobrem apenas o backend. O frontend deve ser executado localmente com `npm run dev` durante o desenvolvimento.
+> **Note:** Current Dockerfiles only cover the backend. The frontend should be run locally with `npm run dev` during development.
 
 ---
 
-## Endpoints da API
+## API Endpoints
 
-| Método | Path | Descrição |
+| Method | Path | Description |
 |---|---|---|
-| `GET` | `/health` | Health check — retorna `{"status": "ok"}` |
-| `POST` | `/v1/extract` | Extrai dados de um documento enviado |
-| `GET` | `/v1/document-types` | Lista todos os tipos de documento suportados |
-| `GET` | `/v1/llm-models` | Lista todos os modelos LLM disponíveis |
+| `GET` | `/health` | Health check — returns `{"status": "ok"}` |
+| `POST` | `/v1/extract` | Extracts data from uploaded document |
+| `GET` | `/v1/document-types` | Lists all supported document types |
+| `GET` | `/v1/llm-models` | Lists all available LLM models |
 
 ### Health Check
 
@@ -273,7 +273,7 @@ curl http://localhost:8000/health
 {"status": "ok"}
 ```
 
-### Listar tipos de documento
+### List document types
 
 ```bash
 curl http://localhost:8000/v1/document-types
@@ -287,7 +287,7 @@ curl http://localhost:8000/v1/document-types
 ]
 ```
 
-### Listar modelos LLM
+### List LLM models
 
 ```bash
 curl http://localhost:8000/v1/llm-models
@@ -300,29 +300,29 @@ curl http://localhost:8000/v1/llm-models
 ]
 ```
 
-### Extrair dados de documento
+### Extract document data
 
 ```
 POST /v1/extract
 Content-Type: multipart/form-data
 ```
 
-| Parâmetro | Tipo | Obrigatório | Descrição |
+| Parameter | Type | Required | Description |
 |---|---|---|---|
-| `file` | `UploadFile` | Sim | Arquivo do documento (PDF, PNG, JPEG, WEBP) |
-| `document_type` | `string` | Sim | Tipo do documento: `cnh`, `aso`, `certificate` |
-| `llm_model` | `string` | Não | Modelo LLM: `gemini-pro` ou `gemini-flash` (usa o padrão se omitido) |
+| `file` | `UploadFile` | Yes | Document file (PDF, PNG, JPEG, WEBP) |
+| `document_type` | `string` | Yes | Document type: `cnh`, `aso`, `certificate` |
+| `llm_model` | `string` | No | LLM model: `gemini-pro` or `gemini-flash` (uses default if omitted) |
 
-#### Exemplo com curl
+#### Example with curl
 
 ```bash
 curl -X POST http://localhost:8000/v1/extract \
-  -F "file=@/caminho/para/cnh.pdf" \
+  -F "file=@/path/to/cnh.pdf" \
   -F "document_type=cnh" \
   -F "llm_model=gemini-flash"
 ```
 
-#### Exemplo de resposta (CNH)
+#### Response example (CNH)
 
 ```json
 {
@@ -336,7 +336,7 @@ curl -X POST http://localhost:8000/v1/extract \
 }
 ```
 
-#### Exemplo de resposta (Certificate)
+#### Response example (Certificate)
 
 ```json
 {
@@ -351,34 +351,34 @@ curl -X POST http://localhost:8000/v1/extract \
 
 ---
 
-## Tipos de documento suportados
+## Supported Document Types
 
-| Tipo | Enum | Modelo Pydantic | Strategy | Campos extraídos |
+| Type | Enum | Pydantic Model | Strategy | Extracted Fields |
 |---|---|---|---|---|
 | CNH | `cnh` | `CNHData` | `CNHExtractionStrategy` | `nome`, `numero_registro`, `cpf`, `data_validade` |
-| Certificado | `certificate` | `CertificateData` | `CertificateExtractionStrategy` | `nome`, `cpf`, `data` |
-| ASO | `aso` | *(sem strategy ainda)* | — | — |
+| Certificate | `certificate` | `CertificateData` | `CertificateExtractionStrategy` | `nome`, `cpf`, `data` |
+| ASO | `aso` | *(no strategy yet)* | — | — |
 
-## Modelos LLM disponíveis
+## Available LLM Models
 
-| Enum | Identificador do Provider | Label |
+| Enum | Provider Identifier | Label |
 |---|---|---|
 | `gemini-pro` | `gemini-3-pro-preview` | Gemini 3 Pro |
 | `gemini-flash` | `gemini-3-flash-preview` | Gemini 3 Flash |
 
 ---
 
-## Como contribuir
+## How to Contribute
 
-### Adicionando um novo tipo de documento
+### Adding a New Document Type
 
-O sistema foi projetado para que adicionar um novo tipo de documento **não exija alterar endpoints, Orchestrator, nem o frontend**. São 6 passos:
+The system is designed so that adding a new document type **does not require changing endpoints, Orchestrator, or frontend**. It takes 6 steps:
 
-#### 1. Criar o modelo Pydantic
+#### 1. Create the Pydantic model
 
-Arquivo: `src/backend/domain/models/novo_documento.py`
+File: `src/backend/domain/models/novo_documento.py`
 
-> Cada field **deve** ter `description` — é o que guia o LLM na extração.
+> Each field **must** have a `description` — this is what guides the LLM during extraction.
 
 ```python
 from datetime import date
@@ -399,9 +399,9 @@ class NovoDocumentoData(BaseModel):
     )
 ```
 
-#### 2. Re-exportar no `__init__.py`
+#### 2. Re-export in `__init__.py`
 
-Em `src/backend/domain/models/__init__.py`:
+In `src/backend/domain/models/__init__.py`:
 
 ```python
 from backend.domain.models.novo_documento import NovoDocumentoData
@@ -409,25 +409,25 @@ from backend.domain.models.novo_documento import NovoDocumentoData
 __all__ = [
     "CNHData",
     "CertificateData",
-    "NovoDocumentoData",  # novo
+    "NovoDocumentoData",  # new
 ]
 ```
 
-#### 3. Adicionar membro ao enum `DocumentType`
+#### 3. Add member to `DocumentType` enum
 
-Em `src/backend/domain/enumx/document_type.py`:
+In `src/backend/domain/enumx/document_type.py`:
 
 ```python
 class DocumentType(str, Enum):
     CNH = "cnh"
     ASO = "aso"
     CERTIFICATE = "certificate"
-    NOVO_DOCUMENTO = "novo_documento"  # novo
+    NOVO_DOCUMENTO = "novo_documento"  # new
 ```
 
-#### 4. Criar a Strategy
+#### 4. Create the Strategy
 
-Arquivo: `src/backend/services/strategies/novo_documento.py`
+File: `src/backend/services/strategies/novo_documento.py`
 
 ```python
 from backend.domain.enumx.document_type import DocumentType
@@ -466,117 +466,117 @@ class NovoDocumentoExtractionStrategy(DocumentExtractionStrategy):
         )  # type: ignore
 ```
 
-#### 5. Registrar na Factory
+#### 5. Register in Factory
 
-Em `src/backend/services/factory.py`, adicionar ao `_types_registry`:
+In `src/backend/services/factory.py`, add to `_types_registry`:
 
 ```python
 from backend.services.strategies.novo_documento import NovoDocumentoExtractionStrategy
 
-# Dentro do __init__:
+# Inside __init__:
 self._types_registry = {
     DocumentType.CNH: CNHExtractionStrategy,
     DocumentType.CERTIFICATE: CertificateExtractionStrategy,
-    DocumentType.NOVO_DOCUMENTO: NovoDocumentoExtractionStrategy,  # novo
+    DocumentType.NOVO_DOCUMENTO: NovoDocumentoExtractionStrategy,  # new
 }
 ```
 
-#### 6. Adicionar label legível
+#### 6. Add readable label
 
-Em `src/backend/api/routers/document_types.py`, adicionar ao `DOCUMENT_TYPE_LABELS`:
+In `src/backend/api/routers/document_types.py`, add to `DOCUMENT_TYPE_LABELS`:
 
 ```python
 DOCUMENT_TYPE_LABELS: dict[DocumentType, str] = {
     DocumentType.CNH: "Carteira Nacional de Habilitação",
     DocumentType.ASO: "Atestado de Saúde Ocupacional",
     DocumentType.CERTIFICATE: "Certificado",
-    DocumentType.NOVO_DOCUMENTO: "Novo Documento",  # novo
+    DocumentType.NOVO_DOCUMENTO: "Novo Documento",  # new
 }
 ```
 
-> **O endpoint `POST /v1/extract`, o Orchestrator e o frontend não precisam ser alterados.** O novo tipo será automaticamente disponível na UI e na API.
+> **The `POST /v1/extract` endpoint, Orchestrator, and frontend do not need to be changed.** The new type will be automatically available in the UI and API.
 
 ---
 
-### Adicionando um novo modelo LLM (mesmo provider)
+### Adding a New LLM Model (Same Provider)
 
-Para adicionar um novo modelo do Google Gemini (ou qualquer provider já existente):
+To add a new Google Gemini model (or any existing provider):
 
-1. **Enum:** Adicionar membro em `src/backend/domain/enumx/llm_model.py`.
-2. **Identificador:** Mapear em `src/backend/core/config.py` → `MODEL_IDENTIFIERS`.
-3. **Builder:** Registrar em `ModelFactory._BUILDERS` em `src/backend/infra/llm/model_factory.py` (pode reusar builder existente).
-4. **Label:** Adicionar label legível em `src/backend/api/routers/llm_models.py` → `LLM_MODEL_LABELS`.
+1. **Enum:** Add member in `src/backend/domain/enumx/llm_model.py`.
+2. **Identifier:** Map in `src/backend/core/config.py` → `MODEL_IDENTIFIERS`.
+3. **Builder:** Register in `ModelFactory._BUILDERS` in `src/backend/infra/llm/model_factory.py` (can reuse existing builder).
+4. **Label:** Add readable label in `src/backend/api/routers/llm_models.py` → `LLM_MODEL_LABELS`.
 
-### Adicionando um novo provider LLM (e.g., OpenAI, Anthropic)
+### Adding a New LLM Provider (e.g., OpenAI, Anthropic)
 
-1. Adicionar um novo método builder privado em `ModelFactory` (e.g., `_build_openai`).
-2. Registrar no `ModelFactory._BUILDERS` para os membros de `LLMModel` correspondentes.
-3. Adicionar as configurações necessárias (API keys, etc.) em `src/backend/core/config.py`.
+1. Add a new private builder method in `ModelFactory` (e.g., `_build_openai`).
+2. Register in `ModelFactory._BUILDERS` for the corresponding `LLMModel` members.
+3. Add necessary configurations (API keys, etc.) in `src/backend/core/config.py`.
 
 ---
 
-## Erros comuns e como resolver
+## Common Errors and Solutions
 
-### API Key inválida ou ausente
+### Invalid or Missing API Key
 
 ```
 ValidationError: API key required for Gemini Developer API
 ```
 
-**Solução:** Defina a variável de ambiente `DOC_EXTRACTOR_GEMINI_API_KEY` com uma chave válida no arquivo `.env`.
+**Solution:** Set the `DOC_EXTRACTOR_GEMINI_API_KEY` environment variable with a valid key in the `.env` file.
 
-### Tipo de documento sem strategy
-
-```json
-{"detail": "No extraction strategy registered for document type: 'aso'"}
-```
-
-**Solução:** O tipo `aso` está registrado no enum mas ainda não possui uma strategy implementada. Siga o guia "Adicionando um novo tipo de documento" para implementá-lo.
-
-### Frontend não conecta ao backend
-
-Se o frontend exibe "Falha ao carregar tipos de documento", verifique:
-1. O backend está rodando na porta 8000.
-2. O CORS está habilitado (já está por padrão em desenvolvimento).
-3. O `BASE_URL` em `src/frontend/src/api.ts` aponta para `http://localhost:8000`.
-
-### Tipo de documento não suportado
+### Document Type Without Strategy
 
 ```json
 {"detail": "No extraction strategy registered for document type: 'aso'"}
 ```
 
-**Causa:** O `DocumentType` existe no enum mas não tem Strategy registrada na Factory.  
-**Solução:** Implemente a Strategy correspondente e registre na Factory.
+**Solution:** The `aso` type is registered in the enum but doesn't have an implemented strategy yet. Follow the "Adding a New Document Type" guide to implement it.
 
-### Erro de validação Pydantic (422)
+### Frontend Doesn't Connect to Backend
+
+If the frontend displays "Failed to load document types", check:
+1. The backend is running on port 8000.
+2. CORS is enabled (already enabled by default in development).
+3. The `BASE_URL` in `src/frontend/src/api.ts` points to `http://localhost:8000`.
+
+### Unsupported Document Type
+
+```json
+{"detail": "No extraction strategy registered for document type: 'aso'"}
+```
+
+**Cause:** The `DocumentType` exists in the enum but doesn't have a Strategy registered in the Factory.
+**Solution:** Implement the corresponding Strategy and register it in the Factory.
+
+### Pydantic Validation Error (422)
 
 ```json
 {"detail": [{"type": "enum", "msg": "Input should be 'cnh', 'aso' or 'certificate'"}]}
 ```
 
-**Causa:** O valor enviado em `document_type` não corresponde a nenhum membro do enum.  
-**Solução:** Use um dos valores aceitos: `cnh`, `aso`, `certificate`.
+**Cause:** The value sent in `document_type` doesn't match any enum member.
+**Solution:** Use one of the accepted values: `cnh`, `aso`, `certificate`.
 
-### Documento ilegível
+### Illegible Document
 
 ```json
 {"detail": "Document could not be read or parsed"}
 ```
 
-**Causa:** O arquivo enviado está corrompido, vazio ou em formato não suportado.  
-**Solução:** Verifique o arquivo e envie um PDF ou imagem legível (PNG, JPEG, WEBP).
+**Cause:** The uploaded file is corrupted, empty, or in an unsupported format.
+**Solution:** Verify the file and send a legible PDF or image (PNG, JPEG, WEBP).
 
 ---
 
-## Observações finais
+## Final Notes
 
-### Boas práticas aplicadas
+### Best Practices Applied
 
-- **SOLID** — Cada classe tem responsabilidade única; dependências são injetadas via interfaces
-- **Type hints em 100%** das funções e métodos
-- **Domínio puro** — Modelos e interfaces sem dependências de infraestrutura
-- **Structured Output** — O LLM retorna diretamente um objeto Pydantic validado, nunca JSON cru
+- **SOLID** — Each class has a single responsibility; dependencies are injected via interfaces
+- **100% type hints** on all functions and methods
+- **Pure domain** — Models and interfaces without infrastructure dependencies
+- **Structured Output** — The LLM returns a validated Pydantic object directly, never raw JSON
 
 
-Implementar caching do LLM client (singleton na DI)
+Implement LLM client caching (singleton in DI)
