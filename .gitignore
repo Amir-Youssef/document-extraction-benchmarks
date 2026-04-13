@@ -1,0 +1,27 @@
+# Python-generated files
+__pycache__/
+*.py[oc]
+build/
+dist/
+wheels/
+*.egg-info
+
+.venv
+venv    
+.env
+
+docs/
+dataset/
+experiments/results/
+results/
+.vscode/
+
+data/
+results_v1/
+results_completo/
+results_parcial_claude/
+
+.claude/    
+CLAUDE.md
+
+ground_truth/

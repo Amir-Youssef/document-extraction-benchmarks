@@ -1,0 +1,72 @@
+================================================================================
+                    MODELOS DISPONÍVEIS - DOC EXTRACTOR (VISÃO)
+================================================================================
+
+Este arquivo lista apenas os modelos Multimodais (com capacidade visual)
+ativos no sistema. Versões obsoletas de texto e modelos deprecados foram removidos.
+
+--------------------------------------------------------------------------------
+ #  | Modelo              | Versão/Tamanho      | Modo Visual     | Contexto
+--------------------------------------------------------------------------------
+ 1  | Gemini 3.1 Pro      | Preview (v3.1)      | PDF nativo      | 1M tokens
+ 2  | Gemini 3 Flash      | Preview (v3)        | PDF nativo      | 1M tokens
+ 3  | Kimi K2.5           | MoE 1T (32B ativos) | PDF -> Imagem   | 128K
+ 4  | Qwen 3.5 27B        | 27B denso (v3.5)    | PDF -> Imagem   | 128K
+ 5  | Qwen 3.5 35B        | MoE 35B (3B ativos) | PDF -> Imagem   | 128K
+ 6  | Qwen 3.5 9B         | 9B denso (v3.5)     | PDF -> Imagem   | 128K
+ 7  | Qwen3-VL            | v3 (Vision-Lang)    | PDF -> Imagem   | 128K
+ 8  | Qwen3-VL 30B        | 30B (Vision-Lang)   | PDF -> Imagem   | 128K
+ 9  | Gemma 3 27B         | 27B (v3)            | PDF -> Imagem   | 128K
+10  | Gemma 3 12B         | 12B (v3)            | PDF -> Imagem   | 128K
+--------------------------------------------------------------------------------
+
+================================================================================
+DETALHES TÉCNICOS POR MODELO
+================================================================================
+
+--- FAMÍLIA GEMINI (Google) ---
+- Gemini 3.1 Pro: Versão Pro mais recente configurada. Melhor estabilidade e
+  maior capacidade de raciocínio. Suporte nativo a PDF.
+- Gemini 3 Flash: Modelo padrão otimizado para custo e velocidade.
+
+--- FAMÍLIA QWEN (Alibaba Cloud) ---
+- Qwen 3.5 27B: Modelo denso de 27B parâmetros da família Qwen v3.5.
+  Implementado via endpoint dedicado vLLM da 4vants. Alta performance visual.
+- Qwen 3.5 35B (A3B): Arquitetura MoE com 35B parâmetros totais, mas apenas
+  ~3B ativos por token. Latência muito baixa apesar do tamanho nominal.
+  Implementado via endpoint dedicado vLLM da 4vants.
+- Qwen 3.5 9B: Modelo denso compacto de 9B parâmetros. Mais rápido da família
+  Qwen 3.5. Implementado via endpoint dedicado vLLM da 4vants.
+- Qwen3-VL: Variante multimodal da Alibaba, desenvolvida primariamente para
+  compreensão de imagens aplicadas a documentos e layouts complexos.
+- Qwen3-VL 30B: Variante multimodal de 30B parâmetros. Maior capacidade visual
+  que o Qwen3-VL base. Servido via Ollama.
+
+--- FAMÍLIA KIMI (Moonshot AI) ---
+- Kimi K2.5: Arquitetura MoE massiva com 1 trilhão de parâmetros. Especialista
+  em lidar com grandes volumes de dados no contexto. Envia o PDF como PNG.
+
+--- FAMÍLIA GEMMA (Google Open Models) ---
+- Gemma 3 27B: Modelo aberto de médio porte. Usa codificador SigLIP (v3)
+  especializado em interpretação visual de alta resolução.
+- Gemma 3 12B: Versão compacta e rápida, otimizada para baixa latência.
+
+================================================================================
+INFRAESTRUTURA DE SERVING
+================================================================================
+
+1. GOOGLE AI API     -> Gemini (3.1 Pro / Flash)
+2. VERTEX AI (MG)    -> Kimi K2.5, Qwen3-VL, Gemma 3 27B/12B
+3. vLLM (4vants)     -> Qwen 3.5 27B, Qwen 3.5 35B, Qwen 3.5 9B
+4. OLLAMA (4vants)   -> Qwen3-VL, Qwen3-VL 30B, Gemma 3 27B/12B
+
+================================================================================
+MODOS DE PROCESSAMENTO
+================================================================================
+
+1. PDF NATIVO      -> Gemini (3.1 Pro / Flash)
+2. PDF -> IMAGEM   -> Kimi K2.5, Qwen 3.5, Qwen VL, Gemma 3
+
+--------------------------------------------------------------------------------
+O sistema agora utiliza exclusivamente modelos com capacidade visual direta.
+================================================================================

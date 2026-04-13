@@ -1,0 +1,26 @@
+# Virtual environments
+.venv/
+
+# Version control
+.git/
+.github/
+
+# Python artifacts
+__pycache__/
+*.py[cod]
+*.egg-info/
+build/
+dist/
+wheels/
+
+# Environment and secrets
+.env
+
+# IDE and tooling
+.mypy_cache/
+.pytest_cache/
+.ruff_cache/
+.vscode/
+.idea/
+
+docs/

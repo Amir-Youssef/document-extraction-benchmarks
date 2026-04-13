@@ -1,0 +1,23 @@
+services:
+  doc-extractor:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env
+    restart: unless-stopped
+
+  doc-extractor-dev:
+    build:
+      context: .
+      dockerfile: dev.Dockerfile
+    ports:
+      - "8001:8000"
+    env_file:
+      - .env
+    volumes:
+      - ./src:/app/src
+    profiles:
+      - dev
